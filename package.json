@@ -17,6 +17,7 @@
     "node": ">=22.13.0"
   },
   "dependencies": {
+    "@mastra/ai-sdk": "^1.4.1",
     "@mastra/core": "^1.28.0",
     "@mastra/duckdb": "^1.2.0",
     "@mastra/evals": "^1.2.1",
@@ -24,6 +25,9 @@
     "@mastra/loggers": "^1.1.1",
     "@mastra/memory": "^1.17.1",
     "@mastra/observability": "^1.10.0",
+    "@mastra/rag": "^2.2.1",
+    "@pinecone-database/pinecone": "^7.2.0",
+    "pdfjs-dist": "^5.6.205",
     "zod": "^4.3.6"
   },
   "devDependencies": {
