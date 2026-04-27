@@ -7,6 +7,7 @@ import { MastraCompositeStore } from '@mastra/core/storage';
 import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } from '@mastra/observability';
 import { chatRoute } from '@mastra/ai-sdk';
 import { tajAssistantAgent } from './agents/taj-agent';
+import { telegramWebhookRoute } from './server/telegram-webhook';
 
 export const mastra = new Mastra({
   workflows: {},
@@ -20,6 +21,7 @@ export const mastra = new Mastra({
     },
     apiRoutes: [
       chatRoute({ path: '/chat/:agentId' }),
+      telegramWebhookRoute,
     ],
   },
   storage: new MastraCompositeStore({

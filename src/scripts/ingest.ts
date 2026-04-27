@@ -17,6 +17,7 @@ import { MDocument } from '@mastra/rag';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 
@@ -27,6 +28,10 @@ GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href;
 
 const INDEX_NAME = 'taj-knowledge';
 const BATCH_SIZE = 96; // Pinecone's limit for integrated inference upserts
+
+function isTextItem(item: TextItem | TextMarkedContent): item is TextItem {
+  return 'str' in item && typeof item.str === 'string';
+}
 
 /**
  * Extract all text from a PDF buffer using pdfjs-dist.
@@ -40,7 +45,7 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
     const page = await doc.getPage(i);
     const content = await page.getTextContent();
     const pageText = content.items
-      .filter((item): item is { str: string } => 'str' in item)
+      .filter(isTextItem)
       .map((item) => item.str)
       .join(' ');
     pages.push(pageText);
