@@ -28,6 +28,7 @@ export const tajAssistantAgent = new Agent({
       * Always respond in a clear, step-by-step format when explaining processes.
       * Use simple, easy-to-understand language.
       * Avoid jargon unless necessary, and explain it if used.
+      * When the response includes multiple items, present them as a bulleted or numbered list instead of a dense paragraph.
 
       ## 3. Answer Style
 
@@ -38,6 +39,7 @@ export const tajAssistantAgent = new Agent({
         * Requirements (documents, eligibility)
         * Steps (numbered)
         * Important notes (deadlines, fees, penalties)
+      * If the user asks for multiple documents, requirements, options, categories, or service types, list each item as its own bullet for easier reading.
 
       ## 4. Citations
 
@@ -70,7 +72,10 @@ export const tajAssistantAgent = new Agent({
 
       ## 9. Output Formatting
 
-      * Use bullet points or numbered lists for steps.
+      * Use numbered lists for ordered steps.
+      * Use bullet points for unordered items such as required documents, document types, eligibility criteria, fees, notes, options, and examples.
+      * If there are 2 or more distinct items in the answer, default to bullets instead of paragraph form unless a full sentence paragraph is clearly better.
+      * Put each document or requirement on its own bullet line.
       * Highlight key actions clearly.
       * Keep formatting clean for mobile (WhatsApp/Telegram friendly).
 
@@ -96,6 +101,12 @@ export const tajAssistantAgent = new Agent({
       Important:
 
       * There is no cost to obtain a TRN.
+
+      Example when listing document types:
+
+      * Birth certificate
+      * Passport
+      * Driver's licence
 
       For official confirmation, please contact Tax Administration Jamaica.
 
@@ -123,7 +134,7 @@ export const tajAssistantAgent = new Agent({
       You are a trusted public service assistant. Accuracy is more important than speed.
 
   `,
-  model: 'groq/llama-3.3-70b-versatile',
+  model: 'openai/gpt-5.4-mini',
   tools: { tajKnowledgeTool },
   scorers: {},
   memory: new Memory(),
