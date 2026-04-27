@@ -1,30 +1,64 @@
-# taj-assistant
+# TAJ Assistant
 
-Welcome to your new [Mastra](https://mastra.ai/) project! We're excited to see what you'll build.
+TAJ Assistant is a Mastra-based AI assistant for answering general Tax Administration Jamaica (TAJ) questions using a retrieval-backed knowledge base. It is designed to stay grounded in uploaded TAJ documents instead of answering from model memory alone.
 
-## Getting Started
+## What It Does
 
-Start the development server:
+- Answers questions about tax services, TRN services, and motor vehicle services.
+- Uses Pinecone-backed retrieval before responding.
+- Exposes a chat API route through Mastra.
+- Stores local Mastra state in LibSQL and observability data in DuckDB for development.
+
+## Project Layout
+
+- `src/mastra/agents/taj-agent.ts`: Main TAJ assistant agent and its response rules.
+- `src/mastra/tools/rag-tool.ts`: Knowledge-base search tool backed by Pinecone.
+- `src/mastra/index.ts`: Mastra app registration, storage, logging, observability, and chat route.
+- `src/scripts/ingest.ts`: Script for chunking and ingesting TAJ source documents into Pinecone.
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and provide the required values:
+
+- `OPENAI_API_KEY`: Used by the TAJ assistant model.
+- `PINECONE_API_KEY`: Used by the retrieval tool and ingestion script.
+
+## Running Locally
+
+Start Mastra Studio and the local API server:
 
 ```shell
 npm run dev
 ```
 
-Open [http://localhost:4111](http://localhost:4111) in your browser to access [Mastra Studio](https://mastra.ai/docs/studio/overview). It provides an interactive UI for building and testing your agents, along with a REST API that exposes your Mastra application as a local service. This lets you start building without worrying about integration right away.
+Mastra Studio is available at [http://localhost:4111](http://localhost:4111).
 
-You can start editing files inside the `src/mastra` directory. The development server will automatically reload whenever you make changes.
+The chat API route is registered at:
 
-## Learn more
+```text
+/chat/:agentId
+```
 
-To learn more about Mastra, visit our [documentation](https://mastra.ai/docs/). Your bootstrapped project includes example code for [agents](https://mastra.ai/docs/agents/overview), [tools](https://mastra.ai/docs/agents/using-tools), [workflows](https://mastra.ai/docs/workflows/overview), [scorers](https://mastra.ai/docs/evals/overview), and [observability](https://mastra.ai/docs/observability/overview).
+Use `taj-assistant` as the agent id.
 
-If you're new to AI agents, check out our [course](https://mastra.ai/learn) and [YouTube videos](https://youtube.com/@mastra-ai). You can also join our [Discord](https://discord.gg/BTYqqHKUrf) community to get help and share your projects.
+## Ingesting Knowledge
 
-## Deploy to the Mastra platform
+Load source documents into Pinecone with:
 
-The [Mastra platform](https://projects.mastra.ai) provides two products for deploying and managing AI applications built with the Mastra framework:
+```shell
+npx tsx --env-file=.env src/scripts/ingest.ts ./path/to/documents
+```
 
-- **Studio**: A hosted visual environment for testing agents, running workflows, and inspecting traces
-- **Server**: A production deployment target that runs your Mastra application as an API server
+Supported file types:
 
-Learn more in the [Mastra platform documentation](https://mastra.ai/docs/mastra-platform/overview).
+- `.pdf`
+- `.md`
+- `.txt`
+
+The ingestion script creates or reuses the `taj-knowledge` Pinecone index and stores chunk text with source metadata.
+
+## Notes
+
+- This assistant is intended for general guidance, not personalized tax advice.
+- Retrieved content quality depends on the source documents you ingest.
+- Generated local database files should stay out of git unless you intentionally want fixture data in the repo.

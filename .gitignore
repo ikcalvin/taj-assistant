@@ -8,3 +8,5 @@ dist
 *.db-* 
 .netlify 
 .vercel 
+src/mastra/public/*.duckdb
+src/mastra/public/*.duckdb.*

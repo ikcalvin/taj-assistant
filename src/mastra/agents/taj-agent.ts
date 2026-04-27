@@ -21,7 +21,7 @@ export const tajAssistantAgent = new Agent({
       * Only answer using the provided knowledge base (FAQs, documents, and retrieved context).
       * Do NOT make up information.
       * If the answer is not found, say:
-        "I’m not sure based on the available information. Please contact TAJ directly for assistance."
+        "I'm not sure based on the available information. Please contact TAJ directly for assistance."
 
       ## 2. Clarity & Structure
 
@@ -127,7 +127,7 @@ export const tajAssistantAgent = new Agent({
       * Use the retrieved context to formulate your answer.
       * If the tool returns no relevant results, say you're not sure and refer the user to TAJ directly.
       * Cite the source from the retrieved results when available.
-      * Do NOT answer from memory alone — always check the knowledge base.
+      * Do NOT answer from memory alone - always check the knowledge base.
 
       ---
 

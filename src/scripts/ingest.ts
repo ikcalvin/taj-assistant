@@ -67,7 +67,7 @@ async function main() {
   const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
 
   // 1. Create index with integrated inference if it doesn't exist
-  console.log(`📌 Ensuring Pinecone index "${INDEX_NAME}" exists...`);
+  console.log(`Ensuring Pinecone index "${INDEX_NAME}" exists...`);
   try {
     await pc.createIndexForModel({
       name: INDEX_NAME,
@@ -80,10 +80,10 @@ async function main() {
       waitUntilReady: true,
       suppressConflicts: true,
     });
-    console.log(`✅ Index "${INDEX_NAME}" is ready.`);
+    console.log(`Index "${INDEX_NAME}" is ready.`);
   } catch (error: unknown) {
     if (error instanceof Error && error.message?.includes('ALREADY_EXISTS')) {
-      console.log(`✅ Index "${INDEX_NAME}" already exists.`);
+      console.log(`Index "${INDEX_NAME}" already exists.`);
     } else {
       throw error;
     }
@@ -93,7 +93,7 @@ async function main() {
 
   // 2. Read all PDF and Markdown files
   const resolvedDir = path.resolve(docsDir);
-  console.log(`📂 Scanning directory: ${resolvedDir}`);
+  console.log(`Scanning directory: ${resolvedDir}`);
 
   const entries = await fs.readdir(resolvedDir, { withFileTypes: true });
   const supportedFiles = entries.filter(
@@ -111,7 +111,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`📄 Found ${supportedFiles.length} file(s) to process.\n`);
+  console.log(`Found ${supportedFiles.length} file(s) to process.\n`);
 
   let totalChunks = 0;
 
@@ -130,7 +130,7 @@ async function main() {
     }
 
     if (!textContent.trim()) {
-      console.log(`  ⚠️  Skipping "${file.name}" — no text content found.`);
+      console.log(`  Skipping "${file.name}" - no text content found.`);
       continue;
     }
 
@@ -142,7 +142,7 @@ async function main() {
       overlap: 50,
     });
 
-    console.log(`  📝 Created ${chunks.length} chunks`);
+    console.log(`  Created ${chunks.length} chunks`);
 
     // 5. Determine category from filename
     const category = inferCategory(file.name);
@@ -162,19 +162,19 @@ async function main() {
         await index.upsertRecords({ records });
 
         console.log(
-          `  📤 Upserted batch ${Math.floor(i / BATCH_SIZE) + 1} (${batch.length} records)`,
+          `  Upserted batch ${Math.floor(i / BATCH_SIZE) + 1} (${batch.length} records)`,
         );
       }
 
       totalChunks += chunks.length;
     } catch (err) {
-      console.error(`  ❌ Failed to upsert "${file.name}":`, (err as Error).message);
+      console.error(`  Failed to upsert "${file.name}":`, (err as Error).message);
     }
     console.log('');
   }
 
   console.log(
-    `\n✅ Done! Ingested ${totalChunks} total chunks from ${supportedFiles.length} file(s) into "${INDEX_NAME}".`,
+    `\nDone. Ingested ${totalChunks} total chunks from ${supportedFiles.length} file(s) into "${INDEX_NAME}".`,
   );
 }
 
@@ -199,6 +199,6 @@ function inferCategory(filename: string): string {
 }
 
 main().catch((error) => {
-  console.error('❌ Ingestion failed:', error);
+  console.error('Ingestion failed:', error);
   process.exit(1);
 });
