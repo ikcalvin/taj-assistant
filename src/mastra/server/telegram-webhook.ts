@@ -201,57 +201,88 @@ export const telegramWebhookRoute = registerApiRoute('/telegram/webhook', {
     const mastra = c.get('mastra');
     const logger = mastra.getLogger();
 
-    if (!isTelegramSecretValid(c.req.header('x-telegram-bot-api-secret-token'))) {
-      return c.json({ ok: false, ignored: 'invalid_secret' }, 401);
-    }
-
-    const update = (await c.req.json()) as TelegramUpdate;
-    const message = update.message ?? update.edited_message;
-
-    if (!message?.chat || !message.from) {
-      return c.json({ ok: true, ignored: 'unsupported_update' });
-    }
-
-    const botUsername = getBotUsername();
-
-    if (!shouldRespondToMessage(message, botUsername)) {
-      return c.json({ ok: true, ignored: 'not_addressed_to_bot' });
-    }
-
-    const sanitizedPrompt = sanitizeTelegramPrompt(message, botUsername);
-
-    if (!sanitizedPrompt) {
-      await sendTelegramMessage({
-        chatId: message.chat.id,
-        text: getWelcomeMessage(),
-        replyToMessageId: message.message_id,
-      });
-
-      return c.json({ ok: true });
-    }
+    logger?.info('Telegram webhook received request');
 
     try {
-      const result = await tajAssistantAgent.generate(sanitizedPrompt, {
-        memory: buildMemoryKeys(message, message.from),
+      if (!isTelegramSecretValid(c.req.header('x-telegram-bot-api-secret-token'))) {
+        logger?.warn('Invalid Telegram webhook secret token');
+        return c.json({ ok: false, ignored: 'invalid_secret' }, 401);
+      }
+
+      const update = (await c.req.json()) as TelegramUpdate;
+      const message = update.message ?? update.edited_message;
+
+      if (!message?.chat || !message.from) {
+        logger?.debug('Received unsupported update type');
+        return c.json({ ok: true, ignored: 'unsupported_update' });
+      }
+
+      const botUsername = getBotUsername();
+
+      if (!shouldRespondToMessage(message, botUsername)) {
+        logger?.debug('Message not addressed to bot', { chatId: message.chat.id, messageId: message.message_id });
+        return c.json({ ok: true, ignored: 'not_addressed_to_bot' });
+      }
+
+      const sanitizedPrompt = sanitizeTelegramPrompt(message, botUsername);
+
+      if (!sanitizedPrompt) {
+        logger?.debug('Empty prompt, sending welcome message');
+        try {
+          await sendTelegramMessage({
+            chatId: message.chat.id,
+            text: getWelcomeMessage(),
+            replyToMessageId: message.message_id,
+          });
+        } catch (sendError) {
+          logger?.error('Failed to send welcome message', { error: sendError });
+        }
+        return c.json({ ok: true });
+      }
+
+      logger?.info('Processing message from Telegram', { 
+        chatId: message.chat.id, 
+        userId: message.from.id,
+        prompt: sanitizedPrompt.substring(0, 50) 
       });
 
-      const responseText = result.text?.trim() || 'I was unable to generate a response. Please try again.';
+      try {
+        const result = await tajAssistantAgent.generate(sanitizedPrompt, {
+          memory: buildMemoryKeys(message, message.from),
+        });
 
-      await sendTelegramMessage({
-        chatId: message.chat.id,
-        text: responseText,
-        replyToMessageId: message.message_id,
-      });
+        const responseText = result.text?.trim() || 'I was unable to generate a response. Please try again.';
+
+        logger?.debug('Agent generated response', { 
+          chatId: message.chat.id,
+          responseLength: responseText.length 
+        });
+
+        await sendTelegramMessage({
+          chatId: message.chat.id,
+          text: responseText,
+          replyToMessageId: message.message_id,
+        });
+
+        logger?.info('Successfully sent response to Telegram', { chatId: message.chat.id });
+      } catch (agentError) {
+        logger?.error('Telegram agent processing failed', { error: agentError });
+
+        try {
+          await sendTelegramMessage({
+            chatId: message.chat.id,
+            text: 'Sorry, I ran into an issue while processing that message. Please try again.',
+            replyToMessageId: message.message_id,
+          });
+        } catch (sendError) {
+          logger?.error('Failed to send error message to Telegram', { error: sendError });
+        }
+      }
+
+      return c.json({ ok: true });
     } catch (error) {
-      logger?.error('Telegram webhook request failed', { error });
-
-      await sendTelegramMessage({
-        chatId: message.chat.id,
-        text: 'Sorry, I ran into an issue while processing that message. Please try again.',
-        replyToMessageId: message.message_id,
-      });
+      logger?.error('Unexpected error in Telegram webhook handler', { error });
+      return c.json({ ok: false, error: 'Internal server error' }, 500);
     }
-
-    return c.json({ ok: true });
   },
 });
