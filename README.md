@@ -24,10 +24,14 @@ Copy `.env.example` to `.env` and provide the required values:
 
 - `OPENAI_API_KEY`: Used by the TAJ assistant model.
 - `PINECONE_API_KEY`: Used by the retrieval tool and ingestion script.
+- `TURSO_DATABASE_URL`: Remote libSQL connection URL for production Mastra storage.
+- `TURSO_AUTH_TOKEN`: Database token for the Turso database.
 - `TELEGRAM_BOT_TOKEN`: Used to receive and reply to Telegram bot messages.
 - `TELEGRAM_WEBHOOK_SECRET_TOKEN`: Optional shared secret used to verify Telegram webhook requests.
 - `TELEGRAM_BOT_USERNAME`: Recommended for group-chat mention detection, without the leading `@`.
 - `TELEGRAM_API_BASE_URL`: Optional override for the Telegram Bot API base URL.
+
+If `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` are not set, the app falls back to the existing local file-based development storage.
 
 ## Running Locally
 
@@ -70,6 +74,38 @@ curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
 ```
 
 In private chats, the bot responds to normal messages. In group chats, it responds when mentioned, when replied to, or when sent commands like `/ask`.
+
+## Turso Setup
+
+For production deployment, this project can use Turso for Mastra storage.
+
+1. Install and log into the Turso CLI.
+2. Create a database:
+
+```shell
+turso db create taj-assistant
+```
+
+3. Get the database URL:
+
+```shell
+turso db show taj-assistant
+```
+
+4. Create a database token:
+
+```shell
+turso db tokens create taj-assistant
+```
+
+5. Set these values in `.env`:
+
+```text
+TURSO_DATABASE_URL=libsql://...
+TURSO_AUTH_TOKEN=...
+```
+
+When those env vars are present, Mastra uses Turso-backed `LibSQLStore` for production storage instead of the local `mastra.db` file.
 
 ## Ingesting Knowledge
 

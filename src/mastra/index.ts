@@ -2,12 +2,32 @@
 import { Mastra } from '@mastra/core/mastra';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
-import { DuckDBStore } from "@mastra/duckdb";
 import { MastraCompositeStore } from '@mastra/core/storage';
 import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } from '@mastra/observability';
 import { chatRoute } from '@mastra/ai-sdk';
 import { tajAssistantAgent } from './agents/taj-agent';
 import { telegramWebhookRoute } from './server/telegram-webhook';
+
+const tursoDatabaseUrl = process.env.TURSO_DATABASE_URL?.trim();
+const tursoAuthToken = process.env.TURSO_AUTH_TOKEN?.trim();
+const isTursoConfigured = Boolean(tursoDatabaseUrl && tursoAuthToken);
+
+const mastraStorage = isTursoConfigured
+  ? new LibSQLStore({
+      id: 'mastra-storage',
+      url: tursoDatabaseUrl!,
+      authToken: tursoAuthToken!,
+    })
+  : new MastraCompositeStore({
+      id: 'composite-storage',
+      default: new LibSQLStore({
+        id: 'mastra-storage',
+        url: 'file:./mastra.db',
+      }),
+      domains: {
+        observability: await new (await import('@mastra/duckdb')).DuckDBStore().getStore('observability'),
+      },
+    });
 
 export const mastra = new Mastra({
   workflows: {},
@@ -24,16 +44,7 @@ export const mastra = new Mastra({
       telegramWebhookRoute,
     ],
   },
-  storage: new MastraCompositeStore({
-    id: 'composite-storage',
-    default: new LibSQLStore({
-      id: "mastra-storage",
-      url: "file:./mastra.db",
-    }),
-    domains: {
-      observability: await new DuckDBStore().getStore('observability'),
-    }
-  }),
+  storage: mastraStorage,
   logger: new PinoLogger({
     name: 'Mastra',
     level: 'info',
