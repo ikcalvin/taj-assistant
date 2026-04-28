@@ -20,6 +20,7 @@ import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mj
 import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
+import { loadInfisicalEnvironment } from '../mastra/env';
 
 // Set up pdfjs-dist worker for Node.js (requires file:// URL on Windows)
 const require = createRequire(import.meta.url);
@@ -55,6 +56,8 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
 }
 
 async function main() {
+  await loadInfisicalEnvironment();
+
   const docsDir = process.argv[2];
 
   if (!docsDir) {

@@ -1,9 +1,12 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import { Pinecone } from '@pinecone-database/pinecone';
+import { getRequiredEnv } from '../env';
 
-const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
-const index = pc.index('taj-knowledge');
+function getKnowledgeIndex() {
+  const pc = new Pinecone({ apiKey: getRequiredEnv('PINECONE_API_KEY') });
+  return pc.index('taj-knowledge');
+}
 
 export const tajKnowledgeTool = createTool({
   id: 'taj-knowledge-search',
@@ -25,6 +28,7 @@ export const tajKnowledgeTool = createTool({
   }),
   execute: async (inputData) => {
     try {
+      const index = getKnowledgeIndex();
       const response = await index.searchRecords({
         query: {
           inputs: { text: inputData.query },

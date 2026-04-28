@@ -5,8 +5,14 @@ import { LibSQLStore } from '@mastra/libsql';
 import { MastraCompositeStore } from '@mastra/core/storage';
 import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } from '@mastra/observability';
 import { chatRoute } from '@mastra/ai-sdk';
-import { tajAssistantAgent } from './agents/taj-agent';
-import { telegramWebhookRoute } from './server/telegram-webhook';
+import { loadInfisicalEnvironment } from './env';
+
+await loadInfisicalEnvironment();
+
+const [{ tajAssistantAgent }, { telegramWebhookRoute }] = await Promise.all([
+  import('./agents/taj-agent'),
+  import('./server/telegram-webhook'),
+]);
 
 const tursoDatabaseUrl = process.env.TURSO_DATABASE_URL?.trim();
 const tursoAuthToken = process.env.TURSO_AUTH_TOKEN?.trim();

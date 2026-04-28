@@ -30,8 +30,18 @@ Copy `.env.example` to `.env` and provide the required values:
 - `TELEGRAM_WEBHOOK_SECRET_TOKEN`: Optional shared secret used to verify Telegram webhook requests.
 - `TELEGRAM_BOT_USERNAME`: Recommended for group-chat mention detection, without the leading `@`.
 - `TELEGRAM_API_BASE_URL`: Optional override for the Telegram Bot API base URL.
+- `INFISICAL_CLIENT_ID`: Machine identity client ID for Infisical Universal Auth.
+- `INFISICAL_CLIENT_SECRET`: Machine identity client secret for Infisical Universal Auth.
+- `INFISICAL_PROJECT_ID`: Infisical project ID containing this app's secrets.
+- `INFISICAL_ENVIRONMENT`: Infisical environment slug to read from. Defaults to `prod`.
+- `INFISICAL_SECRET_PATH`: Infisical folder path to read from. Defaults to `/`.
+- `INFISICAL_SITE_URL`: Optional Infisical base URL. Defaults to `https://app.infisical.com`.
+- `INFISICAL_RECURSIVE`: Whether to read nested folder secrets. Defaults to `true`.
+- `INFISICAL_OVERRIDE_PROCESS_ENV`: When `true`, Infisical values overwrite existing process env values. Defaults to `false`.
 
 If `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` are not set, the app falls back to the existing local file-based development storage.
+
+If `INFISICAL_CLIENT_ID`, `INFISICAL_CLIENT_SECRET`, and `INFISICAL_PROJECT_ID` are set, the app authenticates with Infisical at startup and loads secrets into `process.env` before the Mastra agent and tools initialize.
 
 ## Running Locally
 
@@ -42,6 +52,8 @@ npm run dev
 ```
 
 Mastra Studio is available at [http://localhost:4111](http://localhost:4111).
+
+If you are using Infisical, you can keep the application secrets in Infisical and only place the Infisical bootstrap variables in `.env`.
 
 The chat API route is registered at:
 
@@ -106,6 +118,38 @@ TURSO_AUTH_TOKEN=...
 ```
 
 When those env vars are present, Mastra uses Turso-backed `LibSQLStore` for production storage instead of the local `mastra.db` file.
+
+## Infisical Setup
+
+This project is wired for production-style Infisical access using a Machine Identity with Universal Auth and the official `@infisical/sdk`.
+
+1. Create an Infisical project.
+2. Add your application secrets to the appropriate environment and path.
+3. Create a Machine Identity with read access to that environment and path.
+4. Enable Universal Auth for that Machine Identity and copy the Client ID and Client Secret.
+5. Add these bootstrap values to `.env`:
+
+```text
+INFISICAL_CLIENT_ID=...
+INFISICAL_CLIENT_SECRET=...
+INFISICAL_PROJECT_ID=...
+INFISICAL_ENVIRONMENT=prod
+INFISICAL_SECRET_PATH=/
+```
+
+6. Store your application secrets in Infisical under the selected environment and path using the same keys the app expects, for example:
+
+```text
+OPENAI_API_KEY
+PINECONE_API_KEY
+TURSO_DATABASE_URL
+TURSO_AUTH_TOKEN
+TELEGRAM_BOT_TOKEN
+TELEGRAM_WEBHOOK_SECRET_TOKEN
+TELEGRAM_BOT_USERNAME
+```
+
+At startup, the app logs into Infisical, fetches the secrets, and injects them into `process.env` before Mastra agents and tools are created.
 
 ## Ingesting Knowledge
 
