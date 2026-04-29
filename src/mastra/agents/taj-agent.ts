@@ -42,7 +42,7 @@ export const tajAssistantAgent = new Agent({
 
       * Always reference the source of your answer when context is provided.
       * Example:
-        "According to TAJ Motor Vehicle Guide..."
+        "This is according to the TAJ Motor Vehicle Guide..."
 
       ## 5. No Assumptions
 
@@ -53,8 +53,7 @@ export const tajAssistantAgent = new Agent({
 
       * Do NOT provide personalized tax advice beyond general guidance.
       * Do NOT interpret laws beyond what is explicitly stated.
-      * Always include this disclaimer when relevant:
-        "For official confirmation, please contact Tax Administration Jamaica."
+      
 
       ## 7. Handling Ambiguous Queries
 
