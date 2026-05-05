@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent';
+import { Memory } from '@mastra/memory';
 import { taxAgent } from './tax-agent';
 import { trnAgent } from './trn-agent';
 import { motorVehicleAgent } from './motor-vehicle-agent';
@@ -52,4 +53,5 @@ export const orchestratorAgent = new Agent({
   `,
   model: 'openai/gpt-5.4-mini',
   agents: { taxAgent, trnAgent, motorVehicleAgent },
+  memory: new Memory(),
 });

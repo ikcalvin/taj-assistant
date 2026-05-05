@@ -5,7 +5,6 @@ import { LibSQLStore } from '@mastra/libsql';
 import { MastraCompositeStore } from '@mastra/core/storage';
 import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } from '@mastra/observability';
 import { chatRoute } from '@mastra/ai-sdk';
-import { tajAssistantAgent } from './agents/taj-agent';
 import { orchestratorAgent } from './agents/orchestrator-agent';
 import { taxAgent } from './agents/tax-agent';
 import { trnAgent } from './agents/trn-agent';
@@ -15,6 +14,9 @@ import { telegramWebhookRoute } from './server/telegram-webhook';
 const tursoDatabaseUrl = process.env.TURSO_DATABASE_URL?.trim();
 const tursoAuthToken = process.env.TURSO_AUTH_TOKEN?.trim();
 const isTursoConfigured = Boolean(tursoDatabaseUrl && tursoAuthToken);
+const mastraCloudAccessToken = process.env.MASTRA_CLOUD_ACCESS_TOKEN?.trim();
+const isCloudExporterEnabled = Boolean(mastraCloudAccessToken);
+const shouldForwardLogsToObservability = process.env.MASTRA_OBSERVABILITY_LOGS_ENABLED?.trim() === 'true';
 
 const mastraStorage = isTursoConfigured
   ? new LibSQLStore({
@@ -36,7 +38,6 @@ const mastraStorage = isTursoConfigured
 export const mastra = new Mastra({
   workflows: {},
   agents: {
-    tajAssistantAgent,
     orchestratorAgent,
     taxAgent,
     trnAgent,
@@ -63,10 +64,17 @@ export const mastra = new Mastra({
     configs: {
       default: {
         serviceName: 'mastra',
-        exporters: [
-          new DefaultExporter(), // Persists traces to storage for Mastra Studio
-          new CloudExporter(), // Sends observability data to hosted Mastra Studio (if MASTRA_CLOUD_ACCESS_TOKEN is set)
-        ],
+        exporters: isCloudExporterEnabled
+          ? [
+              new DefaultExporter(), // Persists traces to storage for Mastra Studio
+              new CloudExporter({ accessToken: mastraCloudAccessToken }), // Sends observability data to hosted Mastra Studio
+            ]
+          : [
+              new DefaultExporter(), // Persists traces to storage for Mastra Studio
+            ],
+        logging: {
+          enabled: shouldForwardLogsToObservability, // Some stores do not support log batch writes
+        },
         spanOutputProcessors: [
           new SensitiveDataFilter(), // Redacts sensitive data like passwords, tokens, keys
         ],
