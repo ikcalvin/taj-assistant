@@ -1,5 +1,5 @@
 import { registerApiRoute } from '@mastra/core/server';
-import { tajAssistantAgent } from '../agents/taj-agent';
+import { orchestratorAgent } from '../agents/orchestrator-agent';
 
 const TELEGRAM_API_BASE_URL = process.env.TELEGRAM_API_BASE_URL ?? 'https://api.telegram.org';
 const TELEGRAM_TEXT_LIMIT = 4000;
@@ -247,7 +247,7 @@ export const telegramWebhookRoute = registerApiRoute('/telegram/webhook', {
       });
 
       try {
-        const result = await tajAssistantAgent.generate(sanitizedPrompt, {
+        const result = await orchestratorAgent.generate(sanitizedPrompt, {
           memory: buildMemoryKeys(message, message.from),
         });
 

@@ -6,6 +6,10 @@ import { MastraCompositeStore } from '@mastra/core/storage';
 import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } from '@mastra/observability';
 import { chatRoute } from '@mastra/ai-sdk';
 import { tajAssistantAgent } from './agents/taj-agent';
+import { orchestratorAgent } from './agents/orchestrator-agent';
+import { taxAgent } from './agents/tax-agent';
+import { trnAgent } from './agents/trn-agent';
+import { motorVehicleAgent } from './agents/motor-vehicle-agent';
 import { telegramWebhookRoute } from './server/telegram-webhook';
 
 const tursoDatabaseUrl = process.env.TURSO_DATABASE_URL?.trim();
@@ -31,7 +35,13 @@ const mastraStorage = isTursoConfigured
 
 export const mastra = new Mastra({
   workflows: {},
-  agents: { tajAssistantAgent },
+  agents: {
+    tajAssistantAgent,
+    orchestratorAgent,
+    taxAgent,
+    trnAgent,
+    motorVehicleAgent,
+  },
   scorers: {},
   server: {
     cors: {
