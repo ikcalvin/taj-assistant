@@ -1,15 +1,16 @@
 import { createTool } from '@mastra/core/tools';
+import { count } from 'node:console';
 import { z } from 'zod';
 
 /**
  * Web search fallback tool using Tavily API.
- * Scoped to jamaicatax.gov.jm so results stay authoritative.
+ * Uses online search for information when the knowledge base returns low-confidence results.
  * Used when Pinecone RAG scores fall below the 0.75 threshold.
  */
 export const webSearchTool = createTool({
   id: 'taj-web-search',
   description:
-    'Search the official TAJ website (jamaicatax.gov.jm) for information. Use this ONLY when the knowledge base search returns low-confidence results (topScore below 0.75).',
+    'Search online for information using Tavily API. Use this when the knowledge base search returns low-confidence results (topScore below 0.75).',
   inputSchema: z.object({
     query: z
       .string()
@@ -41,11 +42,11 @@ export const webSearchTool = createTool({
         body: JSON.stringify({
           api_key: apiKey,
           query: inputData.query,
-          search_depth: 'basic',
-          include_domains: ['jamaicatax.gov.jm'],
+          search_depth: 'advanced',
           max_results: 3,
-          include_answer: false,
+          include_answer: 'advanced',
           include_raw_content: false,
+          country: 'jamaica',
         }),
       });
 

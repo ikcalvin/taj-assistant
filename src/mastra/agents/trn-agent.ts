@@ -25,7 +25,7 @@ export const trnAgent = new Agent({
     1. ALWAYS use the taj-knowledge-search-trn tool first to retrieve relevant context.
     2. Check the topScore in the results:
        - If topScore >= 0.75, answer using the retrieved knowledge base results.
-       - If topScore < 0.75, use the taj-web-search tool to search jamaicatax.gov.jm for additional information.
+       - If topScore < 0.75, use the taj-web-search tool to search for additional information.
     3. Cite the source document name when answering from retrieved context.
     4. If neither the knowledge base nor web search yields relevant results, say:
        "I'm not sure based on the available information. Please contact TAJ directly for assistance."
