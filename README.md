@@ -9,26 +9,31 @@ TAJ Assistant is a Mastra-based AI assistant for answering general Tax Administr
 - Uses namespaced Pinecone-backed retrieval (tax, TRN, motor vehicle) before responding.
 - Falls back to web search when knowledge base confidence is low.
 - Remembers conversation context across messages per user.
-- Exposes a chat API route through Mastra.
+- Exposes a chat API route through Mastra for use with the [assistant-ui](https://www.assistant-ui.com/) chat frontend ([taj-chat](https://github.com/ikcalvin/taj-chat)).
 - Accepts Telegram bot webhooks and replies in Telegram chats.
 - Stores local Mastra state in LibSQL and observability data in DuckDB for development.
 
 ## Architecture
 
 ```
-Telegram user
-     |
-     v
-Orchestrator agent  (classifies intent, remembers conversation context)
-     |
-     |-->  Tax agent          -->  Pinecone [namespace: tax]
-     |-->  TRN agent          -->  Pinecone [namespace: trn]
-     |-->  Motor vehicle agent -->  Pinecone [namespace: motor-vehicle]
-                                        |
-                                        |-- score < 0.75?
-                                                |
-                                                v
-                                        Web search (Tavily)
+assistant-ui (taj-chat)         Telegram user
+        |                            |
+        v                            v
+    /chat/:agentId          /telegram/webhook
+        \                          /
+         \________________________/
+                    |
+                    v
+    Orchestrator agent  (classifies intent, remembers conversation context)
+                    |
+                    |-->  Tax agent          -->  Pinecone [namespace: tax]
+                    |-->  TRN agent          -->  Pinecone [namespace: trn]
+                    |-->  Motor vehicle agent -->  Pinecone [namespace: motor-vehicle]
+                                                       |
+                                                       |-- score < 0.75?
+                                                               |
+                                                               v
+                                                       Web search (Tavily)
 ```
 
 The orchestrator classifies each incoming message and delegates to the appropriate specialist agent. Each specialist queries only its own Pinecone namespace, reducing cross-domain retrieval noise. When retrieval confidence is low (topScore < 0.75), the specialist falls back to a Tavily-powered web search.
@@ -41,7 +46,7 @@ The orchestrator has memory enabled, so it retains conversation context across m
 - `src/mastra/agents/tax-agent.ts`: Specialist for GCT, income tax, payroll, property tax, and withholding tax.
 - `src/mastra/agents/trn-agent.ts`: Specialist for TRN registration, TCC applications, and FATCA.
 - `src/mastra/agents/motor-vehicle-agent.ts`: Specialist for eMVRC renewal, driver's licence, and fitness certificate.
-- `src/mastra/agents/taj-agent.ts`: General-purpose TAJ assistant (legacy fallback).
+
 - `src/mastra/tools/rag-tool.ts`: Knowledge-base search tool backed by Pinecone with namespace support and score reporting.
 - `src/mastra/tools/web-search-tool.ts`: Tavily-powered web search fallback for low-confidence RAG results.
 - `src/mastra/index.ts`: Mastra app registration, storage, logging, observability, and routes.
@@ -79,13 +84,16 @@ npm run dev
 
 Mastra Studio is available at [http://localhost:4111](http://localhost:4111).
 
-The chat API route is registered at:
+The chat API route is registered at `/chat/:agentId` using AI SDK v6 streaming format.
 
-```text
-/chat/:agentId
-```
+The `:agentId` in the URL matches the **JavaScript object key** used in the `agents` map in `index.ts`, not the agent's `id` field. Available agent keys:
 
-Available agent IDs: `orchestrator`, `tax-agent`, `trn-agent`, `motor-vehicle-agent`, `taj-assistant`.
+| URL path | JS key | Agent `id` |
+|---|---|---|
+| `/chat/orchestratorAgent` | `orchestratorAgent` | `orchestrator` |
+| `/chat/taxAgent` | `taxAgent` | `tax-agent` |
+| `/chat/trnAgent` | `trnAgent` | `trn-agent` |
+| `/chat/motorVehicleAgent` | `motorVehicleAgent` | `motor-vehicle-agent` |
 
 The Telegram webhook route is registered at:
 

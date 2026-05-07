@@ -46,12 +46,11 @@ export const mastra = new Mastra({
   scorers: {},
   server: {
     cors: {
-      origin: ['http://localhost:3000'],
-      allowMethods: ['GET', 'POST', 'OPTIONS'],
-      allowHeaders: ['Content-Type'],
+      origin: "http://localhost:3000",
+      credentials: true,
     },
     apiRoutes: [
-      chatRoute({ path: '/chat/:agentId' }),
+      chatRoute({ path: '/chat/:agentId', version: 'v6' }),
       telegramWebhookRoute,
     ],
   },
