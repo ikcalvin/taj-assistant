@@ -1,4 +1,3 @@
-
 import { Mastra } from '@mastra/core/mastra';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
@@ -18,6 +17,44 @@ const mastraCloudAccessToken = process.env.MASTRA_CLOUD_ACCESS_TOKEN?.trim();
 const isCloudExporterEnabled = Boolean(mastraCloudAccessToken);
 const shouldForwardLogsToObservability = process.env.MASTRA_OBSERVABILITY_LOGS_ENABLED?.trim() === 'true';
 
+// ---------------------------------------------------------------------------
+// CORS — configurable allowed origins
+// ---------------------------------------------------------------------------
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+  : ['http://localhost:3000'];
+
+// ---------------------------------------------------------------------------
+// Auth — API key protection for chat endpoints
+// ---------------------------------------------------------------------------
+const mastraApiKey = process.env.MASTRA_API_KEY?.trim();
+
+// Build server auth config when an API key is set
+function buildAuthMiddleware() {
+  if (!mastraApiKey) {
+    console.warn(
+      '[security] MASTRA_API_KEY is not set — chat endpoints are UNPROTECTED. Set MASTRA_API_KEY in .env for production.',
+    );
+    return [];
+  }
+
+  return [
+    {
+      path: '/chat/*' as const,
+      handler: async (c: any, next: () => Promise<void>) => {
+        const authHeader = c.req.header('authorization');
+        if (!authHeader || authHeader !== `Bearer ${mastraApiKey}`) {
+          return c.json({ error: 'Unauthorized' }, 401);
+        }
+        await next();
+      },
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Storage
+// ---------------------------------------------------------------------------
 const mastraStorage = isTursoConfigured
   ? new LibSQLStore({
       id: 'mastra-storage',
@@ -35,6 +72,9 @@ const mastraStorage = isTursoConfigured
       },
     });
 
+// ---------------------------------------------------------------------------
+// Mastra instance
+// ---------------------------------------------------------------------------
 export const mastra = new Mastra({
   workflows: {},
   agents: {
@@ -46,9 +86,10 @@ export const mastra = new Mastra({
   scorers: {},
   server: {
     cors: {
-      origin: "http://localhost:3000",
+      origin: allowedOrigins.length === 1 ? allowedOrigins[0] : allowedOrigins,
       credentials: true,
     },
+    middleware: buildAuthMiddleware(),
     apiRoutes: [
       chatRoute({ path: '/chat/:agentId', version: 'v6' }),
       telegramWebhookRoute,
@@ -65,17 +106,17 @@ export const mastra = new Mastra({
         serviceName: 'mastra',
         exporters: isCloudExporterEnabled
           ? [
-              new DefaultExporter(), // Persists traces to storage for Mastra Studio
-              new CloudExporter({ accessToken: mastraCloudAccessToken }), // Sends observability data to hosted Mastra Studio
+              new DefaultExporter(),
+              new CloudExporter({ accessToken: mastraCloudAccessToken }),
             ]
           : [
-              new DefaultExporter(), // Persists traces to storage for Mastra Studio
+              new DefaultExporter(),
             ],
         logging: {
-          enabled: shouldForwardLogsToObservability, // Some stores do not support log batch writes
+          enabled: shouldForwardLogsToObservability,
         },
         spanOutputProcessors: [
-          new SensitiveDataFilter(), // Redacts sensitive data like passwords, tokens, keys
+          new SensitiveDataFilter(),
         ],
       },
     },
