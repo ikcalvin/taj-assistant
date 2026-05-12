@@ -71,6 +71,8 @@ Copy `.env.example` to `.env` and provide the required values:
 - `SEARCH_API_KEY`: Tavily API key for web search fallback.
 - `MASTRA_CLOUD_ACCESS_TOKEN`: Optional token for Mastra Cloud observability export. Leave unset for local-only observability.
 - `MASTRA_OBSERVABILITY_LOGS_ENABLED`: Optional (`true`/`false`). Defaults to `false` in this project to avoid unsupported batch log-write warnings on some storage providers.
+- `LANGFUSE_PUBLIC_KEY`: Optional. Used alongside `LANGFUSE_SECRET_KEY` to enable Langfuse tracing.
+- `LANGFUSE_SECRET_KEY`: Optional. Used alongside `LANGFUSE_PUBLIC_KEY` to enable Langfuse tracing.
 
 If `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` are not set, the app falls back to the existing local file-based development storage.
 

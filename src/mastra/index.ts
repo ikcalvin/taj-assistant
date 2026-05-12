@@ -3,6 +3,7 @@ import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
 import { MastraCompositeStore } from '@mastra/core/storage';
 import { Observability, DefaultExporter, CloudExporter, SensitiveDataFilter } from '@mastra/observability';
+import { LangfuseExporter } from '@mastra/langfuse';
 import { chatRoute } from '@mastra/ai-sdk';
 import { orchestratorAgent } from './agents/orchestrator-agent';
 import { taxAgent } from './agents/tax-agent';
@@ -16,6 +17,9 @@ const isTursoConfigured = Boolean(tursoDatabaseUrl && tursoAuthToken);
 const mastraCloudAccessToken = process.env.MASTRA_CLOUD_ACCESS_TOKEN?.trim();
 const isCloudExporterEnabled = Boolean(mastraCloudAccessToken);
 const shouldForwardLogsToObservability = process.env.MASTRA_OBSERVABILITY_LOGS_ENABLED?.trim() === 'true';
+const langfusePublicKey = process.env.LANGFUSE_PUBLIC_KEY?.trim();
+const langfuseSecretKey = process.env.LANGFUSE_SECRET_KEY?.trim();
+const isLangfuseEnabled = Boolean(langfusePublicKey && langfuseSecretKey);
 
 // ---------------------------------------------------------------------------
 // CORS — configurable allowed origins
@@ -104,14 +108,11 @@ export const mastra = new Mastra({
     configs: {
       default: {
         serviceName: 'mastra',
-        exporters: isCloudExporterEnabled
-          ? [
-              new DefaultExporter(),
-              new CloudExporter({ accessToken: mastraCloudAccessToken }),
-            ]
-          : [
-              new DefaultExporter(),
-            ],
+        exporters: [
+          new DefaultExporter(),
+          ...(isCloudExporterEnabled ? [new CloudExporter({ accessToken: mastraCloudAccessToken })] : []),
+          ...(isLangfuseEnabled ? [new LangfuseExporter({ publicKey: langfusePublicKey, secretKey: langfuseSecretKey })] : []),
+        ],
         logging: {
           enabled: shouldForwardLogsToObservability,
         },
